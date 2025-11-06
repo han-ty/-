@@ -194,7 +194,7 @@ CatBoost模型
 3)	模型训练
 4)	
 #### CatBoost模型
-'''python
+'''
 model = CatBoostClassifier(
    iterations=6000, 
    eval_metric='AUC', 
@@ -204,7 +204,7 @@ model = CatBoostClassifier(
    loss_function='CrossEntropy', 
    early_stopping_rounds=300
 model.fit(x_train, y_train, eval_set=(x_cv, y_cv), plot=True, verbose=False)
-
+'''
 #### Python模型
 ####    ==================== 自定义梯度提升树模型 ====================
 '''python
