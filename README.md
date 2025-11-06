@@ -91,7 +91,7 @@
  
  
  
-2)	相关性分析
+### 2)	相关性分析
 使用直方图或箱线图等了解单个特征的分布。
 数据分布:
 1、均值与标准差：例如 loanAmnt的均值为 14412.30，标准差为 8725.23，标准差相对均值较大，这表明贷款金额数据的离散程度较高，数据可能较为分散。
@@ -169,16 +169,16 @@
 
  
  
-图像说明：
-这是 47 个特征间的热力图，通过颜色（红 - 蓝渐变）直观呈现特征两两间的相关系数。红色代表正相关（颜色越深正相关性越强 ），特征间线性关联紧密，可能存在信息冗余。蓝色代表负相关（颜色越深负相关性越强 ），反映特征间反向变化趋势，浅蓝 / 白色区域则是弱相关或无显著关联，说明这些特征相对独立。
-数据的离散程度：
-1、整体跨度：系数从 -0.4 到 1.0 ，说明不同特征对的相关性差异大，存在强正相关（深红，接近 1 ）、弱负相关（浅蓝，接近 -0.4 ）等，整体离散较明显。
-2、数值分布：多数系数集中在 -0.2~0.8 ，但也有极端值（如部分深红接近 1 ，浅蓝接近 -0.4 ），说明部分特征对高度关联，部分关联较弱，离散性突出。
-异常值：
-热力图用颜色（红 - 蓝）和数值表示特征间相关系数（理论范围 -1~1 ）。若某特征对的系数远偏离常规范围（如突然接近 1 或 -1 ，但无合理业务关联 ），可能暗示异常。判断强相关 / 极端相关是否符合 “贷款金额与还款能力正相关” 等常识，冲突则标记异常值。
-使用图表展示数据中的趋势和模式，帮助发现潜在问题和改进点。
+#### 图像说明：
+#### 这是 47 个特征间的热力图，通过颜色（红 - 蓝渐变）直观呈现特征两两间的相关系数。红色代表正相关（颜色越深正相关性越强 ），特征间线性关联紧密，可能存在信息冗余。蓝色代表负相关（颜色越深负相关性越强 ），反映特征间反向变化趋势，浅蓝 / 白色区域则是弱相关或无显著关联，说明这些特征相对独立。
+#### 数据的离散程度：
+#### 1、整体跨度：系数从 -0.4 到 1.0 ，说明不同特征对的相关性差异大，存在强正相关（深红，接近 1 ）、弱负相关（浅蓝，接近 -0.4 ）等，整体离散较明显。
+#### 2、数值分布：多数系数集中在 -0.2~0.8 ，但也有极端值（如部分深红接近 1 ，浅蓝接近 -0.4 ），说明部分特征对高度关联，部分关联较弱，离散性突出。
+#### 异常值：
+#### 热力图用颜色（红 - 蓝）和数值表示特征间相关系数（理论范围 -1~1 ）。若某特征对的系数远偏离常规范围（如突然接近 1 或 -1 ，但无合理业务关联 ），可能暗示异常。判断强相关 / 极端相关是否符合 “贷款金额与还款能力正相关” 等常识，冲突则标记异常值。
+#### 使用图表展示数据中的趋势和模式，帮助发现潜在问题和改进点。
 ## 5.	模型选择和训练
-1)	选择模型
+### 1)	选择模型
 CatBoost模型
 1.代码中明确导入并使用CatBoostClassifier
 2.参数配置：iterations=6000, eval_metric='AUC', learning_rate=0.05, depth=6, l2_leaf_reg=5
@@ -186,15 +186,14 @@ CatBoost模型
 4.内置对抗过拟合机制（early_stopping_rounds=300）
 5.适用于不平衡数据集
 
-2)	划分数据集
+### 2)	划分数据集
 划分方式：5折交叉验证
 每折训练集：90%（train_size=0.9）
 验证集：10%
 
-3)	模型训练
-4)	
-#### CatBoost模型
-'''python
+### 3)		模型训练
+```python
+#CatBoost模型
 model = CatBoostClassifier(
    iterations=6000, 
    eval_metric='AUC', 
@@ -204,18 +203,17 @@ model = CatBoostClassifier(
    loss_function='CrossEntropy', 
    early_stopping_rounds=300
 model.fit(x_train, y_train, eval_set=(x_cv, y_cv), plot=True, verbose=False)
-'''
-#### Python模型
-####    ==================== 自定义梯度提升树模型 ====================
-'''python
+
+#Python模型
 model = CatBoostClassifier(
+  # ==================== 自定义梯度提升树模型 ====================
 class SimpleGBM:
     class TreeNode:
         def __init__(self, idx, val, left, right):
-            self.idx = idx      分裂特征索引
-            self.val = val      分裂阈值
-            self.left = left    左子树
-            self.right = right  右子树
+            self.idx = idx      # 分裂特征索引
+            self.val = val      # 分裂阈值
+            self.left = left    # 左子树
+            self.right = right  # 右子树
     
     def __init__(self, n_trees=10, learning_rate=0.1, max_depth=3):
         self.n_trees = n_trees
@@ -230,7 +228,7 @@ class SimpleGBM:
         best_idx, best_val = -1, float('inf')
         min_loss = float('inf')
         
-        随机选择部分特征
+        # 随机选择部分特征
         feat_indices = random.sample(range(X.shape[1]), min(5, X.shape[1]))
         
         for idx in feat_indices:
@@ -242,7 +240,7 @@ class SimpleGBM:
                 if np.sum(left_mask) == 0 or np.sum(right_mask) == 0:
                     continue
                 
-                计算损失（均方误差）
+                # 计算损失（均方误差）
                 loss = (np.sum(residuals[left_mask]**2) + 
                         np.sum(residuals[right_mask]**2))
                 
@@ -253,7 +251,7 @@ class SimpleGBM:
         if best_idx == -1:
             return np.mean(residuals)
             
-         递归构建子树
+        # 递归构建子树
         left_mask = X[:, best_idx] <= best_val
         left = self._build_tree(X[left_mask], residuals[left_mask], depth+1)
         right = self._build_tree(X[~left_mask], residuals[~left_mask], depth+1)
@@ -268,18 +266,18 @@ class SimpleGBM:
         return self._predict_tree(node.right, x)
     
     def fit(self, X, y):
-         初始化预测值为0
+        # 初始化预测值为0
         predictions = np.zeros(len(y))
         
         for _ in range(self.n_trees):
-            计算负梯度（残差）
+            # 计算负梯度（残差）
             residuals = y - 1/(1+np.exp(-predictions))
             
-            构建新的决策树
+            # 构建新的决策树
             tree = self._build_tree(X, residuals, 0)
             self.trees.append(tree)
             
-            更新预测值
+            # 更新预测值
             for i in range(len(X)):
                 predictions[i] += self.lr * self._predict_tree(tree, X[i])
     
@@ -289,50 +287,49 @@ class SimpleGBM:
             for i in range(len(X)):
                 preds[i] += self.lr * self._predict_tree(tree, X[i])
                 
-         应用sigmoid函数
+        # 应用sigmoid函数
         proba = 1/(1+np.exp(-preds))
         return np.vstack([1-proba, proba]).T
 
- ==================== 数据生成和训练设置 ====================
-生成模拟数据（实际使用时替换为真实数据）
+# ==================== 数据生成和训练设置 ====================
+# 生成模拟数据（实际使用时替换为真实数据）
 x = np.random.randn(1000, 20)
 y = (np.sum(x[:, :5], axis=1) > 0).astype(int)
 x_test = np.random.randn(200, 20)
 
-设置交叉验证参数
+# 设置交叉验证参数
 nsplits = 5
 cv_score = 0
 all_val_metrics = []
 plt.figure(figsize=(15, 10))
 
-==================== 主训练循环 ====================
+# ==================== 主训练循环 ====================
 for i in range(nsplits):
     print(f'Fold {i+1}:')
     
-    数据划分 (保持9:1分割比例)
+    # 数据划分 (保持9:1分割比例)
     x_train, x_cv, y_train, y_cv = train_test_split(
         x, y, train_size=0.9, random_state=i+1
     )
     
-    初始化并训练自定义模型
+    # 初始化并训练自定义模型
     model = SimpleGBM(n_trees=200, learning_rate=0.05, max_depth=5)
     model.fit(x_train, y_train)
     
-    评估模型
+    # 评估模型
     cv_preds = model.predict_proba(x_cv)[:, 1]
     fold_auc = roc_auc_score(y_cv, cv_preds)
     print(f"Fold {i+1} AUC: {fold_auc:.5f}")
     cv_score += fold_auc
     
-    记录每次迭代的验证集性能（模拟）
+    # 记录每次迭代的验证集性能（模拟）
     val_metrics = []
     for step in range(3):
-        在真实场景中，需记录训练过程中的指标
+        # 在真实场景中，需记录训练过程中的指标
         val_metrics.append(fold_auc * (1 - 0.05*step))
     
     all_val_metrics.append(val_metrics)
-
-'''
+```
 ## 6.	模型评估和优化
 1)	模型预测与评估
  
