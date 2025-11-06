@@ -194,7 +194,7 @@ CatBoost模型
 3)	模型训练
 4)	
 #### CatBoost模型
-'''
+'''python
 model = CatBoostClassifier(
    iterations=6000, 
    eval_metric='AUC', 
@@ -332,7 +332,7 @@ for i in range(nsplits):
     
     all_val_metrics.append(val_metrics)
 
-
+'''
 ## 6.	模型评估和优化
 1)	模型预测与评估
  
