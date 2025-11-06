@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>贷款违约预测</title>
+    <style>
+        body {
+            font-family: '微软雅黑', Arial, sans-serif;
+            background: linear-gradient(135deg, #e0e7ff 0%, #f5f6fa 100%);
+            min-height: 100vh;
+            position: relative;
+        }
+        body::before {
+            content: '贷款违约预测';
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) rotate(-20deg);
+            font-size: 80px;
+            color: #e0e0e0;
+            opacity: 0.18;
+            z-index: 0;
+            pointer-events: none;
+            user-select: none;
+            white-space: nowrap;
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: #fff;
+            padding: 36px 48px;
+            border-radius: 14px;
+            box-shadow: 0 4px 16px #d0d0d0;
+            position: relative;
+            z-index: 1;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #2d3a4b;
+            letter-spacing: 2px;
+        }
+        h3 {
+            color: #007bff;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .form-group {
+            margin-bottom: 18px;
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: bold;
+            color: #34495e;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+        input, select {
+            padding: 7px 10px;
+            border: 1px solid #bfc9d1;
+            border-radius: 4px;
+            font-size: 15px;
+            background: #fafdff;
+            transition: border 0.2s;
+        }
+        input:focus {
+            border: 1.5px solid #007bff;
+            outline: none;
+        }
+        .input-tip {
+            color: #e67e22;
+            font-size: 13px;
+            margin-top: 2px;
+            margin-left: 2px;
+        }
+        .input-description {
+            color: #7f8c8d;
+            font-size: 12px;
+            margin-top: 2px;
+            margin-left: 2px;
+        }
+        button {
+            display: block;
+            margin: 30px auto 0 auto;
+            background: linear-gradient(90deg,#007bff,#00c6ff);
+            color: #fff;
+            border: none;
+            padding: 12px 48px;
+            border-radius: 6px;
+            font-size: 18px;
+            cursor: pointer;
+            letter-spacing: 2px;
+            box-shadow: 0 2px 8px #b3d8ff;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: linear-gradient(90deg,#0056b3,#00aaff);
+        }
+        #result {
+            margin-top: 32px;
+            font-size: 22px;
+            text-align: center;
+            color: #fff;
+            background: linear-gradient(90deg,#36d1c4,#007bff 80%);
+            border-radius: 10px;
+            padding: 22px 0;
+            box-shadow: 0 4px 16px #b3d8ff;
+            letter-spacing: 2px;
+            min-height: 40px;
+        }
+        .tip {
+            text-align: center;
+            color: #888;
+            margin-bottom: 18px;
+            font-size: 15px;
+        }
+        .form-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .required-mark {
+            color: #e74c3c;
+            margin-left: 3px;
+        }
+        .risk-assessment {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+            display: none;
+        }
+        .risk-level {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .risk-meter {
+            height: 20px;
+            background: linear-gradient(90deg, #4caf50, #ffeb3b, #f44336);
+            border-radius: 10px;
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .risk-indicator {
+            width: 10px;
+            height: 30px;
+            background-color: #333;
+            position: absolute;
+            top: -5px;
+            transform: translateX(-50%);
+            border-radius: 3px;
+        }
+        .risk-factors {
+            margin-top: 20px;
+        }
+        .risk-factor {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .risk-factor-title {
+            font-weight: bold;
+            color: #333;
+        }
+        .risk-factor-value {
+            float: right;
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>贷款违约预测系统</h2>
+        <div class="tip">请填写下列信息，标有<span class="required-mark">*</span>为必填项。<br>注意：<span style="color:#e67e22;">发放日期（issueDate）请填写8位数字，如20140701</span></div>
+        <form id="predictForm">
+            <!-- 表单将由JavaScript动态生成 -->
+        </form>
+        <button type="submit" form="predictForm">提交预测</button>
+        <div id="result" style="display:none;"></div>
+        
+        <!-- 风险评估可视化 -->
+        <div class="risk-assessment" id="riskAssessment">
+            <div class="risk-level" id="riskLevel">风险等级: <span id="riskLevelValue">-</span></div>
+            <div class="risk-meter">
+                <div class="risk-indicator" id="riskIndicator" style="left: 0%;"></div>
+            </div>
+            <div class="risk-factors" id="riskFactors">
+                <h3>主要风险因素</h3>
+                <!-- 风险因素将动态生成 -->
+            </div>
+        </div>
+    </div>
+    <script>
+    // 字段中文名映射
+    const FEATURE_LABELS = {
+        id: '贷款编号',
+        loanAmnt: '贷款金额',
+        term: '贷款期限（年）',
+        interestRate: '利率（%）',
+        installment: '每月还款额',
+        grade: '贷款等级',
+        subGrade: '贷款子等级',
+        employmentTitle: '就业职位',
+        employmentLength: '工作年限',
+        homeOwnership: '住房所有权',
+        annualIncome: '年收入',
+        verificationStatus: '收入验证状态',
+        issueDate: '贷款发放日期',
+        isDefault: '是否违约',
+        purpose: '贷款目的',
+        postCode: '邮政编码',
+        regionCode: '地区编码',
+        dti: '债务收入比',
+        delinquency_2years: '过去两年逾期次数',
+        ficoRangeLow: 'FICO信用分下限',
+        ficoRangeHigh: 'FICO信用分上限',
+        openAcc: '未结清账户数',
+        pubRec: '公共记录',
+        pubRecBankruptcies: '破产记录',
+        revolBal: '信用卡循环余额',
+        revolUtil: '信用卡使用比率(%)',
+        totalAcc: '总账户数',
+        initialListStatus: '贷款审核状态',
+        applicationType: '申请类型',
+        earliesCreditLine: '最早信用记录日期',
+        title: '贷款标题',
+        policyCode: '政策代码'
+    };
+    
+    // 字段详细描述
+    const FEATURE_DESCRIPTIONS = {
+        id: '标识每笔贷款记录的编号',
+        loanAmnt: '贷款金额，即借款人所申请的贷款数额',
+        term: '贷款期限，以年为单位表示借款人需要偿还贷款的时长',
+        interestRate: '贷款利率，反映借款人贷款所需支付的利息比例',
+        installment: '每月还款额，借款人每月需偿还的固定金额',
+        grade: '贷款等级，根据借款人信用状况等因素划分的评级（A-G，A最好）',
+        subGrade: '更细分的贷款等级，对grade的进一步细化（如A1、B2等）',
+        employmentTitle: '就业职位，记录借款人的工作岗位',
+        employmentLength: '工作年限，借款人当前工作的时长',
+        homeOwnership: '住房所有权情况（0=租房，1=自有住房但房贷尚未还清，2=完全自有住房）',
+        annualIncome: '借款人的年收入',
+        verificationStatus: '收入验证状态，表示借款人的收入是否经过验证以及验证的情况',
+        issueDate: '贷款发放日期（8位数字，如20140701表示2014年7月1日）',
+        isDefault: '是否违约（1=违约，0=未违约）',
+        purpose: '贷款目的，用数字编码表示借款人申请贷款的用途',
+        postCode: '邮政编码，用于标识借款人的居住地区',
+        regionCode: '地区编码，用于更宏观地划分借款人所在的区域',
+        dti: '债务收入比，反映借款人每月债务支出与收入的比例',
+        delinquency_2years: '过去两年的逾期次数，体现借款人过去的信用表现',
+        ficoRangeLow: 'FICO信用分下限，FICO是由美国费埃哲公司开发的信用评分系统',
+        ficoRangeHigh: 'FICO信用分上限',
+        openAcc: '未结清账户数，借款人当前未还清的账户数量',
+        pubRec: '公共记录，用分类编码表示借款人的破产、税收留置权等公共记录信息',
+        pubRecBankruptcies: '公共记录中的破产记录',
+        revolBal: '信用卡循环余额，借款人信用卡上未还清的余额',
+        revolUtil: '信用卡使用比率，即已使用的信用额度与总信用额度的比例',
+        totalAcc: '总账户数，借款人名下的所有账户数量',
+        initialListStatus: '用数字编码（0、1）表示贷款审核是否通过',
+        applicationType: '申请类型，用数字编码（0=个人申请，1=联合申请）',
+        earliesCreditLine: '最早的信用记录日期，反映借款人开始有信用活动的时间',
+        title: '贷款标题，借款人或贷款机构对该笔贷款的简要描述',
+        policyCode: '政策代码，与贷款所遵循的政策或规则相关'
+    };
+    
+    // 字段类型提示
+    const FEATURE_TYPE_TIPS = {
+        id: '请输入数字',
+        loanAmnt: '请输入数字，如10000',
+        term: '请输入数字，如3',
+        interestRate: '请输入数字，如5.5',
+        installment: '请输入数字，如300.5',
+        grade: '请输入大写英文字母，如A、B、C等',
+        subGrade: '请输入大写字母+数字，如A1、B2',
+        employmentTitle: '请输入文本，如"软件工程师"',
+        employmentLength: '请输入数字，如5',
+        homeOwnership: '请输入数字（0=租房，1=自有住房但房贷尚未还清，2=完全自有住房）',
+        annualIncome: '请输入数字，如120000',
+        verificationStatus: '请输入数字',
+        issueDate: '请输入8位数字，如20140701',
+        isDefault: '请输入数字（0=未违约，1=违约）',
+        purpose: '请输入数字',
+        postCode: '请输入数字',
+        regionCode: '请输入数字',
+        dti: '请输入数字，如15.5',
+        delinquency_2years: '请输入数字，如0',
+        ficoRangeLow: '请输入数字，如700',
+        ficoRangeHigh: '请输入数字，如750',
+        openAcc: '请输入数字，如5',
+        pubRec: '请输入数字，如0',
+        pubRecBankruptcies: '请输入数字，如0',
+        revolBal: '请输入数字，如10000',
+        revolUtil: '请输入数字，如48.9（不需要输入%）',
+        totalAcc: '请输入数字，如10',
+        initialListStatus: '请输入数字（0或1）',
+        applicationType: '请输入数字（0=个人申请，1=联合申请）',
+        earliesCreditLine: '请输入年份，如2006',
+        title: '请输入数字或文本',
+        policyCode: '请输入数字'
+    };
+    
+    // 字段分组
+    const FEATURE_GROUPS = {
+        '基本贷款信息': ['id', 'loanAmnt', 'term', 'interestRate', 'installment', 'purpose', 'title', 'issueDate'],
+        '借款人信用状况': ['grade', 'subGrade', 'ficoRangeLow', 'ficoRangeHigh', 'delinquency_2years', 'pubRec', 'pubRecBankruptcies'],
+        '借款人财务状况': ['employmentTitle', 'employmentLength', 'homeOwnership', 'annualIncome', 'dti', 'verificationStatus'],
+        '信用账户信息': ['openAcc', 'revolBal', 'revolUtil', 'totalAcc', 'earliesCreditLine'],
+        '其他信息': ['postCode', 'regionCode', 'initialListStatus', 'applicationType', 'policyCode']
+    };
+    
+    // 必填字段
+    const REQUIRED_FEATURES = [
+        'loanAmnt', 'term', 'interestRate', 'installment', 'grade', 'employmentLength',
+        'homeOwnership', 'annualIncome', 'issueDate', 'openAcc', 'totalAcc', 'earliesCreditLine'
+    ];
+    
+    const form = document.getElementById('predictForm');
+    
+    // 按分组创建表单
+    Object.entries(FEATURE_GROUPS).forEach(([groupName, features]) => {
+        // 创建分组标题
+        const groupTitle = document.createElement('h3');
+        groupTitle.textContent = groupName;
+        form.appendChild(groupTitle);
+        
+        // 创建分组容器
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'form-section';
+        
+        // 为每个分组中的特征创建表单元素
+        features.forEach(f => {
+            const div = document.createElement('div');
+            div.className = 'form-group';
+            
+            // 创建标签
+            const label = document.createElement('label');
+            label.textContent = FEATURE_LABELS[f] || f;
+            
+            // 添加必填标记
+            if (REQUIRED_FEATURES.includes(f)) {
+                const requiredMark = document.createElement('span');
+                requiredMark.className = 'required-mark';
+                requiredMark.textContent = ' *';
+                label.appendChild(requiredMark);
+            }
+            
+            // 创建输入框
+            const input = document.createElement('input');
+            input.name = f;
+            input.required = REQUIRED_FEATURES.includes(f);
+            
+            // 针对部分字段类型优化
+            if (f === 'issueDate') {
+                input.type = 'number';
+                input.placeholder = '如20140701';
+            } else if ([
+                'annualIncome','loanAmnt','installment','dti','revolBal','revolUtil',
+                'term','postCode','regionCode','delinquency_2years','ficoRangeLow','ficoRangeHigh',
+                'openAcc','pubRec','pubRecBankruptcies','totalAcc','initialListStatus',
+                'applicationType','policyCode','employmentLength','homeOwnership'
+            ].includes(f)) {
+                input.type = 'number';
+                if (f === 'revolUtil') {
+                    input.step = '0.1';
+                }
+            } else {
+                input.type = 'text';
+            }
+            
+            // 添加默认值
+            if (f === 'delinquency_2years' || f === 'pubRec' || f === 'pubRecBankruptcies') {
+                input.value = '0';
+            }
+            
+            div.appendChild(label);
+            div.appendChild(input);
+            
+            // 添加类型提示
+            const tip = document.createElement('span');
+            tip.className = 'input-tip';
+            tip.textContent = FEATURE_TYPE_TIPS[f] || '';
+            div.appendChild(tip);
+            
+            // 添加字段描述
+            const description = document.createElement('span');
+            description.className = 'input-description';
+            description.textContent = FEATURE_DESCRIPTIONS[f] || '';
+            div.appendChild(description);
+            
+            groupDiv.appendChild(div);
+        });
+        
+        form.appendChild(groupDiv);
+    });
+    
+    form.onsubmit = async function(e) {
+        e.preventDefault();
+        const data = {};
+        
+        // 获取所有特征组中的所有特征
+        const allFeatures = Object.values(FEATURE_GROUPS).flat();
+        
+        allFeatures.forEach(f => {
+            if (form.elements[f] && f !== 'isDefault') { // 排除isDefault字段，因为这是我们要预测的
+                data[f] = form.elements[f].value;
+            }
+        });
+        
+        const resultDiv = document.getElementById('result');
+        resultDiv.style.display = 'block';
+        resultDiv.textContent = '正在预测，请稍候...';
+        
+        // 隐藏风险评估区域
+        document.getElementById('riskAssessment').style.display = 'none';
+        
+        try {
+            const resp = await fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            if (!resp.ok) {
+                throw new Error(`HTTP错误: ${resp.status}`);
+            }
+            
+            const res = await resp.json();
+            
+            if (res.result.includes('失败')) {
+                resultDiv.style.background = 'linear-gradient(90deg,#e74c3c,#c0392b)';
+                resultDiv.textContent = res.result + '，' + res.probability;
+            } else {
+                resultDiv.textContent = res.result + '，' + res.probability;
+                
+                // 显示风险评估
+                showRiskAssessment(res, data);
+            }
+        } catch (err) {
+            resultDiv.style.background = 'linear-gradient(90deg,#e74c3c,#c0392b)';
+            resultDiv.textContent = '预测失败，请检查输入或稍后重试。错误: ' + err.message;
+        }
+    };
+    
+    // 显示风险评估
+    function showRiskAssessment(result, inputData) {
+        const riskAssessment = document.getElementById('riskAssessment');
+        const riskLevel = document.getElementById('riskLevelValue');
+        const riskIndicator = document.getElementById('riskIndicator');
+        const riskFactors = document.getElementById('riskFactors');
+        
+        // 显示风险评估区域
+        riskAssessment.style.display = 'block';
+        
+        // 设置风险等级
+        riskLevel.textContent = result.risk_level || '-';
+        
+        // 设置风险指示器位置
+        const probability = parseFloat(result.probability.replace(/[^0-9.]/g, '')) / 100;
+        riskIndicator.style.left = (probability * 100) + '%';
+        
+        // 清空风险因素
+        while (riskFactors.children.length > 1) {
+            riskFactors.removeChild(riskFactors.lastChild);
+        }
+        
+        // 添加风险因素
+        const riskFactorsList = analyzeRiskFactors(inputData);
+        riskFactorsList.forEach(factor => {
+            const factorDiv = document.createElement('div');
+            factorDiv.className = 'risk-factor';
+            factorDiv.innerHTML = `
+                <span class="risk-factor-title">${factor.name}</span>
+                <span class="risk-factor-value">${factor.value}</span>
+                <div style="clear:both"></div>
+                <small>${factor.description}</small>
+            `;
+            riskFactors.appendChild(factorDiv);
+        });
+    }
+    
+    // 分析风险因素
+    function analyzeRiskFactors(data) {
+        const factors = [];
+        
+        // 信用等级
+        if (data.grade && data.grade.toUpperCase() >= 'D') {
+            factors.push({
+                name: '信用等级较低',
+                value: data.grade.toUpperCase(),
+                description: '信用等级D或以下通常表示较高的违约风险'
+            });
+        }
+        
+        // 债务收入比
+        if (parseFloat(data.dti) > 20) {
+            factors.push({
+                name: '债务收入比过高',
+                value: data.dti + '%',
+                description: '债务收入比超过20%可能导致还款压力增大'
+            });
+        }
+        
+        // 信用卡使用率
+        if (parseFloat(data.revolUtil) > 70) {
+            factors.push({
+                name: '信用卡使用率高',
+                value: data.revolUtil + '%',
+                description: '信用卡使用率超过70%通常表示财务压力较大'
+            });
+        }
+        
+        // 逾期记录
+        if (parseInt(data.delinquency_2years) > 0) {
+            factors.push({
+                name: '存在逾期记录',
+                value: data.delinquency_2years + '次',
+                description: '过去两年内有逾期记录，增加违约风险'
+            });
+        }
+        
+        // 收入与贷款比例
+        const loanIncomeRatio = parseFloat(data.loanAmnt) / parseFloat(data.annualIncome);
+        if (loanIncomeRatio > 0.5) {
+            factors.push({
+                name: '贷款金额与年收入比例高',
+                value: (loanIncomeRatio * 100).toFixed(1) + '%',
+                description: '贷款金额超过年收入的50%，可能增加还款压力'
+            });
+        }
+        
+        // 利率高
+        if (parseFloat(data.interestRate) > 12) {
+            factors.push({
+                name: '贷款利率高',
+                value: data.interestRate + '%',
+                description: '高利率通常与高风险借款人相关联'
+            });
+        }
+        
+        return factors;
+    }
+    </script>
+</body>
+</html>
