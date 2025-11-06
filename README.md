@@ -192,7 +192,8 @@ CatBoost模型
 验证集：10%
 
 3)	模型训练
-CatBoost模型
+#### CatBoost模型
+
 model = CatBoostClassifier(
    iterations=6000, 
    eval_metric='AUC', 
@@ -203,16 +204,17 @@ model = CatBoostClassifier(
    early_stopping_rounds=300
 model.fit(x_train, y_train, eval_set=(x_cv, y_cv), plot=True, verbose=False)
 
-Python模型
+#### Python模型
+
 model = CatBoostClassifier(
    ==================== 自定义梯度提升树模型 ====================
 class SimpleGBM:
     class TreeNode:
         def __init__(self, idx, val, left, right):
-            self.idx = idx      # 分裂特征索引
-            self.val = val      # 分裂阈值
-            self.left = left    # 左子树
-            self.right = right  # 右子树
+            self.idx = idx      分裂特征索引
+            self.val = val      分裂阈值
+            self.left = left    左子树
+            self.right = right  右子树
     
     def __init__(self, n_trees=10, learning_rate=0.1, max_depth=3):
         self.n_trees = n_trees
