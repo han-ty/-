@@ -205,9 +205,8 @@ model = CatBoostClassifier(
 model.fit(x_train, y_train, eval_set=(x_cv, y_cv), plot=True, verbose=False)
 
 #### Python模型
-
+####    ==================== 自定义梯度提升树模型 ====================
 model = CatBoostClassifier(
-   ==================== 自定义梯度提升树模型 ====================
 class SimpleGBM:
     class TreeNode:
         def __init__(self, idx, val, left, right):
